@@ -1,0 +1,27 @@
+name: Test skip when no reports found and fail_if_no_tests=false
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          github_token: ${{ github.token }}
+          report_paths: 'target/nonexistent-reports/TEST-*.xml'
+          skip_publishing: 'true'
+          fail_if_no_tests: 'false'
+
+      - name: Assert action succeeded when no tests found but fail_if_no_tests=false
+        env:
+          CONCLUSION: ${{ steps.action.outputs.conclusion }}
+        run: |
+          echo "conclusion: $CONCLUSION"
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "FAIL: expected conclusion 'success' when no tests found and fail_if_no_tests=false, but got '$CONCLUSION'"
+            exit 1
+          fi
+          echo "PASS: action correctly succeeded when no test reports found and fail_if_no_tests=false"

@@ -1,0 +1,33 @@
+name: Test basic passing tests with skip_publishing
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture reports into target surefire-reports path
+        run: |
+          mkdir -p target/surefire-reports
+          cp tests/fixtures/surefire-reports/TEST-passing.xml target/surefire-reports/TEST-passing.xml
+
+      - id: action
+        uses: .
+        with:
+          github_token: ${{ github.token }}
+          report_paths: 'target/surefire-reports/TEST-*.xml'
+          skip_publishing: 'true'
+          fail_if_no_tests: 'true'
+          fail_on_test_failures: 'false'
+
+      - name: Assert conclusion is success
+        env:
+          CONCLUSION: ${{ steps.action.outputs.conclusion }}
+        run: |
+          echo "conclusion: $CONCLUSION"
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "FAIL: expected conclusion 'success' but got '$CONCLUSION'"
+            exit 1
+          fi
+          echo "PASS"

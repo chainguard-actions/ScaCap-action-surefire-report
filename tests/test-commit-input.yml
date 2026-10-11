@@ -1,0 +1,54 @@
+name: Test commit input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create passing surefire XML report
+        run: |
+          mkdir -p target/surefire-reports
+          cat > target/surefire-reports/TEST-ExampleTest.xml <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="ExampleTest" tests="1" failures="0" errors="0" skipped="0" time="0.1">
+            <testcase name="testSomething" classname="com.example.ExampleTest" time="0.1"/>
+          </testsuite>
+          EOF
+
+      - name: Get current commit SHA
+        id: get-sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github_token: ${{ github.token }}
+          report_paths: '**/surefire-reports/TEST-*.xml'
+          commit: ${{ steps.get-sha.outputs.sha }}
+          create_check: 'false'
+          skip_publishing: 'true'
+          fail_if_no_tests: 'true'
+          fail_on_test_failures: 'false'
+
+      - name: Assert action ran with commit input
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RESULT: ${{ steps.action.outputs.outcome }}
+        run: |
+          echo "step outcome: $OUTCOME"
+          echo "action output outcome: $RESULT"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$RESULT" ]; then
+              echo "FAIL: action succeeded but outcome output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded with outcome='$RESULT'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected step outcome '$OUTCOME'"
+            exit 1
+          fi

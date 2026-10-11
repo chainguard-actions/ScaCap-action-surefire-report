@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.FailingTest" tests="2" failures="1" errors="0" skipped="0" time="0.200">
+  <testcase name="testPass" classname="com.example.FailingTest" time="0.050"/>
+  <testcase name="testFail" classname="com.example.FailingTest" time="0.150">
+    <failure message="expected: &lt;true&gt; but was: &lt;false&gt;" type="org.opentest4j.AssertionFailedError">
+      org.opentest4j.AssertionFailedError: expected: &lt;true&gt; but was: &lt;false&gt;
+        at com.example.FailingTest.testFail(FailingTest.java:20)
+    </failure>
+  </testcase>
+</testsuite>
